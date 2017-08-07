@@ -38,6 +38,9 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+0.1.1 2017-08-07 Jason Antman <jason@jasonantman.com>:
+- Properly handle -h/--help through bash wrapper
+
 0.1.0 2017-08-01 Jason Antman <jason@jasonantman.com>:
 - Initial version
 """
@@ -64,7 +67,7 @@ except ImportError:
     # python3
     from urllib.parse import urlparse
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
@@ -564,30 +567,30 @@ def parse_args(argv):
     epil = dedent("""
     Usage Examples
     --------------
-    
+
     First, export the address to your Vault instance and authenticate. It's
     recommended that you set VAULT_ADDR in your shell profile (~/.bashrc):
         export VAULT_ADDR=https://my.vault:8200
         vault auth
-    
+
     Then, add the wrapper function to your ~/.bashrc:
         ./vault-aws-creds.py --wrapper-func >> ~/.bashrc
-    
+
     List available accounts:
         vault-aws-creds
-    
+
     List available roles for account "dev":
         vault-aws-creds --roles dev
-    
+
     Get STS credentials for the "foo" role in the "dev" account:
         vault-aws-creds dev foo
-    
+
     Get IAM User credentials for the "foo" role in the "dev" account:
         vault-aws-creds --iam dev foo
-    
+
     Get STS credentials for your last-used role in the "dev" account:
         vault-aws-creds dev
-    
+
     The latest source can be found at:
     <%s>
     """ % _SRC_URL)
@@ -595,8 +598,11 @@ def parse_args(argv):
         description='Retrieve temporary AWS credentials from Vault and print '
                     'bash export lines for them. Intended to be run from a '
                     'bash wrapper function.',
-        epilog=epil, formatter_class=argparse.RawTextHelpFormatter
+        epilog=epil, formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False
     )
+    p.add_argument('-h', '--help', dest='help', action='store_true',
+                   default=False, help='show this help message and exit')
     p.add_argument('-w', '--wrapper-func', dest='show_wrapper',
                    action='store_true', default=False, help='print bash wrapper'
                    ' function to STDOUT and exit')
@@ -632,6 +638,9 @@ def parse_args(argv):
                         'for each account will be stored to and retrieved from '
                         'the config file.')
     args = p.parse_args(argv)
+    if args.help:
+        p.print_help(sys.stderr)
+        raise SystemExit(1)
     if args.version:
         sys.stderr.write("vault-aws-creds.py version %s\n" % __version__)
         raise SystemExit(1)
