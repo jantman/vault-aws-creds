@@ -1,4 +1,4 @@
-#!/home/jantman/venvs/foo/bin/python
+#!/usr/bin/env python
 """
 Script to export Vault-derived temporary AWS creds in the environment.
 
