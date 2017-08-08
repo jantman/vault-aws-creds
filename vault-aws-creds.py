@@ -38,6 +38,10 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+0.1.2 2017-08-08 Marcus Smith:
+- Fix author-specific shebang line
+- Fix usage instructions - VAULT_ADDR must be exported before running -w
+
 0.1.1 2017-08-07 Jason Antman <jason@jasonantman.com>:
 - Properly handle -h/--help through bash wrapper
 
