@@ -9,11 +9,11 @@ Python 2.7+ or Python 3. No external dependencies.
 ## Installation
 
 1. Place ``vault-aws-creds.py`` somewhere on your system and make it executable.
-2. Run ``vault-aws-creds.py --wrapper-func`` and put the output of that
+2. ``export VAULT_ADDR=<address to your Vault instance>``; it's recommended to
+  put that in your ``~/.bashrc`` as well.
+3. Run ``vault-aws-creds.py --wrapper-func`` and put the output of that
   in your ``~/.bashrc``. The wrapper function allows using this Python script to
   set environment variables in the _existing_ shell process.
-3. ``export VAULT_ADDR=<address to your Vault instance>``; it's recommended to
-  put that in your ``~/.bashrc`` as well.
 
 ## Usage
 
