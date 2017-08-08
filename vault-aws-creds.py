@@ -38,6 +38,9 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+0.2.0 2017-08-08 Jason Antman <jason@jasonantman.com>:
+- Fix numerous Python3 errors
+
 0.1.2 2017-08-08 Marcus Smith:
 - Fix author-specific shebang line
 - Fix usage instructions - VAULT_ADDR must be exported before running -w
@@ -55,20 +58,14 @@ import argparse
 import logging
 from textwrap import dedent
 import json
-import ConfigParser
 
-try:
-    # python2
+if sys.version_info[0] == 2:
     from httplib import HTTPSConnection, HTTPConnection
-except ImportError:
-    # python3
-    from http.client import HTTPSConnection, HTTPConnection
-
-try:
-    # python2
+    import ConfigParser
     from urlparse import urlparse
-except ImportError:
-    # python3
+else:
+    from http.client import HTTPSConnection, HTTPConnection
+    import configparser as ConfigParser
     from urllib.parse import urlparse
 
 __version__ = '0.1.1'
@@ -170,7 +167,11 @@ class VaultAwsCredExporter(object):
         logger.debug('_set_conf: section=%s option=%s value=%s',
                      section, option, value)
         self._config.set(section, option, value)
-        with open(self._config_path, 'wb') as fh:
+        if sys.version_info[0] == 2:
+            mode = 'wb'
+        else:
+            mode = 'w'
+        with open(self._config_path, mode) as fh:
             logger.debug('Writing config to: %s', self._config_path)
             self._config.write(fh)
 
