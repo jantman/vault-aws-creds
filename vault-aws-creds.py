@@ -38,6 +38,9 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+0.2.1 2017-09-01 Jason Antman <jason@jasonantman.com>:
+- Remove often-incorrect warning about STS creds not making IAM calls
+
 0.2.0 2017-08-08 Jason Antman <jason@jasonantman.com>:
 - Fix numerous Python3 errors
 
@@ -454,12 +457,6 @@ class VaultAwsCredExporter(object):
             path = "/v1/%screds/%s" % (mountpoint, role_name)
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
-            sys.stderr.write(bold(
-                "WARNING: STS credentials cannot call any IAM APIs or any "
-                "STS APIs other than AssumeRole or GetCallerIdentity. If you "
-                "need to call IAM APIs or other STS APIs, please generate new "
-                "credentials with the --iam option."
-            ) + "\n")
         logger.info('Getting AWS credentials via path: %s', path)
         creds = json.loads(self._vault_request('GET', path))
         data = creds.get('data', {})
