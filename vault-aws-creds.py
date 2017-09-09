@@ -38,6 +38,9 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+0.2.2 2017-09-09 Jason Antman <jason@jasonantman.com>:
+- Fix #3 - Correct misleading/incorrect log output
+
 0.2.1 2017-09-01 Jason Antman <jason@jasonantman.com>:
 - Remove often-incorrect warning about STS creds not making IAM calls
 
@@ -359,18 +362,9 @@ class VaultAwsCredExporter(object):
 
         :return: account name to mountpoint
         :rtype: dict
+        :raises: VaultException
         """
-        try:
-            res = json.loads(self._vault_request('GET', '/v1/sys/mounts'))
-        except VaultException as ex:
-            if 'permission denied' not in str(ex):
-                raise
-            logger.error(
-                'ERROR: Your token does not have permission to list Vault '
-                'mount points; you will have to obtain the AWS backend mount '
-                'points for your accounts from your Vault administrator.'
-            )
-            return {}
+        res = json.loads(self._vault_request('GET', '/v1/sys/mounts'))
         mpoints = {}
         for k, v in res.items():
             if not isinstance(v, type({})):
@@ -516,13 +510,19 @@ class VaultAwsCredExporter(object):
         :return: Vault mountpoint for that account
         :rtype: str
         """
-        mpoints = self._get_aws_mountpoints()
+        mpoints = {}
+        try:
+            mpoints = self._get_aws_mountpoints()
+        except VaultException as ex:
+            if 'permission denied' not in str(ex):
+                raise
         if acct_name in mpoints:
             logger.info('Account name "%s" mountpoint: %s',
                         acct_name, mpoints[acct_name])
             return mpoints[acct_name]
         logger.warning('Account name "%s" not found in list of %d mountpoints; '
-                       'using as an explicit mountpoint for AWS backend.')
+                       'using as an explicit mountpoint for AWS backend.',
+                       acct_name, len(mpoints))
         if not acct_name.endswith('/'):
             acct_name += '/'
         return acct_name
@@ -670,7 +670,17 @@ if __name__ == "__main__":
                      'function.') + "\n"
             )
         if args.ACCOUNT is None:
-            mpoints = exporter._get_aws_mountpoints()
+            mpoints = {}
+            try:
+                mpoints = exporter._get_aws_mountpoints()
+            except VaultException as ex:
+                if 'permission denied' not in str(ex):
+                    raise
+                logger.error(
+                    'ERROR: Your token does not have permission to list Vault '
+                    'mount points; you will have to obtain the AWS backend mount '
+                    'points for your accounts from your Vault administrator.'
+                )
             mpoint_listing = {}
             for name, mpoint in mpoints.items():
                 if mpoint not in mpoint_listing:
