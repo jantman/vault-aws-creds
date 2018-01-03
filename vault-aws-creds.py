@@ -38,6 +38,11 @@ Free for any use provided that changes and improvements are sent back to me.
 Changelog
 ---------
 
+(be sure to increment __version__ with Changelog additions!!)
+
+0.2.3 2018-01-03 Jason Antman <jason@jasonantman.com>:
+- Fix version number in script
+
 0.2.2 2017-09-09 Jason Antman <jason@jasonantman.com>:
 - Fix #3 - Correct misleading/incorrect log output
 
@@ -74,7 +79,7 @@ else:
     import configparser as ConfigParser
     from urllib.parse import urlparse
 
-__version__ = '0.1.1'
+__version__ = '0.2.3'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
