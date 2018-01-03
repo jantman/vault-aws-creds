@@ -3,6 +3,7 @@
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
 Python helper to export Vault-provided temporary AWS creds into the environment.
+Also includes a helper script to generate a Console login URL from STS temporary credentials (from Vault).
 
 ## Requirements
 
@@ -10,12 +11,15 @@ Python 2.7+ or Python 3. No external dependencies.
 
 ## Installation
 
-1. Place ``vault-aws-creds.py`` somewhere on your system and make it executable.
+1. Place (or symlink) ``vault-aws-creds.py`` somewhere on your system and make it executable.
 2. ``export VAULT_ADDR=<address to your Vault instance>``; it's recommended to
   put that in your ``~/.bashrc`` as well.
 3. Run ``vault-aws-creds.py --wrapper-func`` and put the output of that
   in your ``~/.bashrc``. The wrapper function allows using this Python script to
   set environment variables in the _existing_ shell process.
+4. *(optional)* If you wish to use the Console login URL generator, place
+  (or symlink) ``aws-sts-console-url.py`` somewhere on your system and make it
+  executable.
 
 ## Usage
 
@@ -90,6 +94,17 @@ Outputting the following for shell evaluation:
         export AWS_SECRET_ACCESS_KEY='AzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzB'
         unset AWS_SESSION_TOKEN
 ```
+
+## aws-sts-console-url.py Usage
+
+``aws-sts-console-url.py`` is a script that uses STS temporary credentials
+from Vault to generate a pre-signed AWS Console login URL, allowing Console
+access with temporary credentials from Vault. **This can only be used with STS
+temporary credentials, i.e. not ``--iam`` credentials from ``vault-aws-creds``.**
+
+To use, first obtain STS temporary credentials with ``vault-aws-creds`` as shown
+above. Then, run ``aws-sts-console-url.py``; a Console login URL will be displayed
+to STDOUT.
 
 ## Suggested Vault Policies
 
