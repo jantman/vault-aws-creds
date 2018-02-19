@@ -40,6 +40,11 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.4 2018-01-29 Jason Antman <jason@jasonantman.com>:
+- support --ttl option for STS creds. NOTICE: This changes the STS credential
+  calls from read (GET) to update (POST) in keeping with the current API
+  documentation. Your Vault policies may need to change for this.
+
 0.2.3 2018-01-03 Jason Antman <jason@jasonantman.com>:
 - Fix version number in script
 
@@ -69,6 +74,7 @@ import argparse
 import logging
 from textwrap import dedent
 import json
+import re
 
 if sys.version_info[0] == 2:
     from httplib import HTTPSConnection, HTTPConnection
@@ -79,7 +85,7 @@ else:
     import configparser as ConfigParser
     from urllib.parse import urlparse
 
-__version__ = '0.2.3'  # increment version in other scripts in sync with this
+__version__ = '0.2.4'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
@@ -129,8 +135,9 @@ class VaultException(Exception):
 
 class VaultAwsCredExporter(object):
 
-    def __init__(self, config_path, region=None):
+    def __init__(self, config_path, region=None, ttl=None):
         self._config_path = os.path.abspath(config_path)
+        self._ttl = ttl
         self._config = self._read_config(self._config_path)
         if region is None:
             region = self._get_conf('defaults', 'region_name')
@@ -320,8 +327,8 @@ class VaultAwsCredExporter(object):
         else:
             kls = HTTPConnection
         conn = kls(host, port)
-        logger.debug('%s request to %s:%s - %s %s',
-                     scheme, host, port, method, path)
+        logger.debug('%s request to %s:%s - %s %s (body: %s)',
+                     scheme, host, port, method, path, body)
         conn.request(method, path, body, headers)
         resp = conn.getresponse()
         logger.debug('Response: HTTP %s %s', resp.status, resp.reason)
@@ -452,12 +459,25 @@ class VaultAwsCredExporter(object):
                 "You must explicitly specify a role name; it will be stored "
                 "as the default for future invocations." % mountpoint
             )
+        body = None
         if iam:
             path = "/v1/%screds/%s" % (mountpoint, role_name)
+            logger.info(
+                'Getting AWS credentials via path: {0} body: {1}'.format(
+                    path,body
+                )
+            )
+            creds = json.loads(self._vault_request('GET', path, body=body))
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
-        logger.info('Getting AWS credentials via path: %s', path)
-        creds = json.loads(self._vault_request('GET', path))
+            if self._ttl:
+                body = json.dumps({'ttl': self._ttl})
+            logger.info(
+                'Getting AWS credentials via path: {0} body: {1}'.format(
+                    path,body
+                )
+            )
+            creds = json.loads(self._vault_request('POST', path, body=body))
         data = creds.get('data', {})
         if 'lease_id' not in creds or 'access_key' not in data:
             raise VaultException(
@@ -592,6 +612,9 @@ def parse_args(argv):
     Get STS credentials for the "foo" role in the "dev" account:
         vault-aws-creds dev foo
 
+    Same as above, but with a 4-hour TTL:
+        vault-aws-creds --ttl 4h dev foo
+
     Get IAM User credentials for the "foo" role in the "dev" account:
         vault-aws-creds --iam dev foo
 
@@ -626,6 +649,10 @@ def parse_args(argv):
     p.add_argument('-r', '--region', dest='region', action='store', type=str,
                    default=None,
                    help='AWS_REGION to export if not already set')
+    p.add_argument('-t', '--ttl', dest='ttl', action='store', type=str,
+                   default=None,
+                   help='TTL to request STS creds with; must be specified in '
+                        '[0-9]+[hms] format like "30m" or "5h".')
     p.add_argument('ACCOUNT', action='store', default=None, nargs='?',
                    help='AWS account name (Vault AWS backend mount point, or '
                         'mount point after "aws_" prefix); if omitted, all '
@@ -651,7 +678,13 @@ def parse_args(argv):
     if args.version:
         sys.stderr.write("vault-aws-creds.py version %s\n" % __version__)
         raise SystemExit(1)
+    if args.ttl is not None:
+        if args.iam:
+            raise RuntimeError('Error: --ttl can only be used with STS creds.')
+        if not re.match(r'^\d+[hms]$', args.ttl):
+            raise RuntimeError('Error: Invalid TTL format: %s' % args.ttl)
     return args
+
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
@@ -663,7 +696,7 @@ if __name__ == "__main__":
         set_log_info()
 
     try:
-        exporter = VaultAwsCredExporter(args.config, args.region)
+        exporter = VaultAwsCredExporter(args.config, args.region, args.ttl)
 
         if args.show_wrapper:
             print(exporter.bash_wrapper)
