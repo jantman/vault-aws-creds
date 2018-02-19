@@ -460,14 +460,22 @@ class VaultAwsCredExporter(object):
         body = None
         if iam:
             path = "/v1/%screds/%s" % (mountpoint, role_name)
+            logger.info(
+                'Getting AWS credentials via path: {0} body: {1}'.format(
+                    path,body
+                )
+            )
             creds = json.loads(self._vault_request('GET', path, body=body))
-            logger.info('Getting AWS credentials via path: {0} body: {1}'.format(path,body))
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
             if self._ttl:
                 body = json.dumps({'ttl': self._ttl})
+            logger.info(
+                'Getting AWS credentials via path: {0} body: {1}'.format(
+                    path,body
+                )
+            )
             creds = json.loads(self._vault_request('POST', path, body=body))
-            logger.info('Getting AWS credentials via path: {0} body: {1}'.format(path,body))
         data = creds.get('data', {})
         if 'lease_id' not in creds or 'access_key' not in data:
             raise VaultException(
@@ -602,7 +610,7 @@ def parse_args(argv):
     Get STS credentials for the "foo" role in the "dev" account:
         vault-aws-creds dev foo
 
-    Same as above, but with a 4-hour TTL: 
+    Same as above, but with a 4-hour TTL:
         vault-aws-creds --ttl 4h dev foo
 
     Get IAM User credentials for the "foo" role in the "dev" account:
