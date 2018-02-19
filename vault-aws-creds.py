@@ -460,12 +460,14 @@ class VaultAwsCredExporter(object):
         body = None
         if iam:
             path = "/v1/%screds/%s" % (mountpoint, role_name)
+            creds = json.loads(self._vault_request('GET', path, body=body))
+            logger.info('Getting AWS credentials via path: {0} body: {1}'.format(path,body))
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
             if self._ttl:
                 body = json.dumps({'ttl': self._ttl})
-        logger.info('Getting AWS credentials via path: %s', path)
-        creds = json.loads(self._vault_request('GET', path, body=body))
+            creds = json.loads(self._vault_request('POST', path, body=body))
+            logger.info('Getting AWS credentials via path: {0} body: {1}'.format(path,body))
         data = creds.get('data', {})
         if 'lease_id' not in creds or 'access_key' not in data:
             raise VaultException(
