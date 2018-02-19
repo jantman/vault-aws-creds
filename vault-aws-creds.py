@@ -41,7 +41,9 @@ Changelog
 (be sure to increment __version__ with Changelog additions!!)
 
 0.2.4 2018-01-29 Jason Antman <jason@jasonantman.com>:
-- support --ttl option for STS creds
+- support --ttl option for STS creds. NOTICE: This changes the STS credential
+  calls from read (GET) to update (POST) in keeping with the current API
+  documentation. Your Vault policies may need to change for this.
 
 0.2.3 2018-01-03 Jason Antman <jason@jasonantman.com>:
 - Fix version number in script
