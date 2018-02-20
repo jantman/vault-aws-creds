@@ -40,6 +40,9 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
+- store and retrieve TTL value per-mountpoint from config file, like role.
+
 0.2.4 2018-01-29 Jason Antman <jason@jasonantman.com>:
 - support --ttl option for STS creds. NOTICE: This changes the STS credential
   calls from read (GET) to update (POST) in keeping with the current API
@@ -426,7 +429,8 @@ class VaultAwsCredExporter(object):
         logger.debug('Vault Roles for %s mountpoint: %s', mpoint, roles)
         return roles
 
-    def get_creds(self, mountpoint, role_name, iam=False, store_role=True):
+    def get_creds(self, mountpoint, role_name, iam=False, store_role=True,
+                  store_ttl=True):
         """
         Given an AWS secret backend mountpoint and a role name, return export
         statements to set credentials for that role.
@@ -440,6 +444,9 @@ class VaultAwsCredExporter(object):
         :param store_role: if True, store role selection in config file and
           use config file for default role selection
         :type store_role: bool
+        :param store_ttl: if True, store TTL selection in config file and use
+          config file for default TTL selection
+        :type store_ttl: bool
         :return: string of bash source code to export credentials for the role
         :rtype: str
         """
@@ -459,6 +466,11 @@ class VaultAwsCredExporter(object):
                 "You must explicitly specify a role name; it will be stored "
                 "as the default for future invocations." % mountpoint
             )
+        default_ttl = self._get_conf('ttl', mountpoint)
+        if store_ttl and default_ttl is not None and self._ttl is not None:
+            ttl = default_ttl
+        else:
+            ttl = self._ttl
         body = None
         if iam:
             path = "/v1/%screds/%s" % (mountpoint, role_name)
@@ -471,7 +483,7 @@ class VaultAwsCredExporter(object):
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
             if self._ttl:
-                body = json.dumps({'ttl': self._ttl})
+                body = json.dumps({'ttl': ttl})
             logger.info(
                 'Getting AWS credentials via path: {0} body: {1}'.format(
                     path,body
@@ -523,6 +535,8 @@ class VaultAwsCredExporter(object):
         if store_role:
             self._set_conf('roles', mountpoint, role_name)
             self._set_conf_bool('iam', mountpoint, iam)
+        if store_ttl and ttl is not None:
+            self._set_conf('ttl', mountpoint, ttl)
         return "\n".join(exports)
 
     def mountpoint_for_account(self, acct_name):
@@ -666,6 +680,10 @@ def parse_args(argv):
                    action='store_false', default=True,
                    help='Do not store role selection in, or use previous role '
                         'selection from, config file')
+    p.add_argument('-T', '--no-stored-ttl', dest='store_ttl',
+                   action='store_false', default=True,
+                   help='Do not store TTL selection in, or use previous TTL '
+                        'selection from, config file')
     p.add_argument('ROLE', action='store', default=None, nargs='?',
                    help='Vault role name to get creds for in the account; '
                         'if --no-stored-role is not specified, the role name '
@@ -739,7 +757,8 @@ if __name__ == "__main__":
                 sys.stderr.write(rname + "\n")
             raise SystemExit(1)
         print(exporter.get_creds(acct, args.ROLE, iam=args.iam,
-                                 store_role=args.store_role))
+                                 store_role=args.store_role,
+                                 store_ttl=args.store_ttl))
     except VaultException as ex:
         sys.stderr.write("ERROR: %s\n" % ex)
         raise SystemExit(1)

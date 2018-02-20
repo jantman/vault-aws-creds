@@ -2,7 +2,7 @@
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-Python helper to export Vault-provided temporary AWS creds into the environment.
+Python helper to export Vault-provided temporary AWS credentials into the environment.
 Also includes a helper script to generate a Console login URL from STS temporary credentials (from Vault).
 
 ## Requirements
@@ -33,6 +33,8 @@ Available Accounts:
 "aws_uat" a.k.a. "uat"
 ```
 
+__Note:__ This requires that your token have "read" access to ``sys/mounts``.
+
 ### List available roles for account "dev"
 
 ```bash
@@ -44,6 +46,8 @@ deploy
 developer
 readonly
 ```
+
+__Note:__ This requires that your token have "list" access to ``roles`` under the specified mountpoint (i.e. ``aws_dev/roles`` in the above example).
 
 ### Get STS credentials for the "foo" role in the "dev" account
 

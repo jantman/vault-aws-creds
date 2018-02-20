@@ -30,6 +30,9 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
+- change to vault-aws-creds.py
+
 0.2.4 2018-01-29 Jason Antman <jason@jasonantman.com>:
 - change to vault-aws-creds.py
 
