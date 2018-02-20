@@ -79,6 +79,24 @@ Outputting the following for shell evaluation:
         export AWS_SESSION_TOKEN='F...F'
 ```
 
+### Get 4-hour-lifetime STS credentials for the "bar" role in the "prod" account
+
+(Note: this requires that your user in Vault have "update" capabilities for the sts path. Users of older Vault installations may only have "read".)
+
+```bash
+$ vault-aws-creds --ttl=4h prod bar
+WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
+Got credentials for account 'aws_dev/' role 'foo'
+Request ID (for troubleshooting): b02d0346-cce2-911f-d853-17cf8aa591a2
+Lease (credentials) will expire in: 3h 59m 59s
+Outputting the following for shell evaluation:
+        export AWS_REGION='us-east-1'
+        export AWS_DEFAULT_REGION='us-east-1'
+        export AWS_ACCESS_KEY_ID='ASIAzzzzzzzzzzzzzzzz'
+        export AWS_SECRET_ACCESS_KEY='8zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzE'
+        export AWS_SESSION_TOKEN='F...F'
+```
+
 ### Get IAM User credentials for the "foo" role in the "dev" account
 
 ```bash
