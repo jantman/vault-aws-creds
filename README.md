@@ -49,7 +49,6 @@ readonly
 
 ```bash
 $ vault-aws-creds dev foo
-WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
 Got credentials for account 'aws_dev/' role 'foo'
 Request ID (for troubleshooting): c0e952d4-61ea-72e8-7b56-2df50538eacf
 Lease (credentials) will expire in: 59m 59s
@@ -67,7 +66,6 @@ the role name:
 
 ```bash
 $ vault-aws-creds dev
-WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
 Got credentials for account 'aws_dev/' role 'foo'
 Request ID (for troubleshooting): b02d0346-cce2-911f-d853-17cf8aa591a2
 Lease (credentials) will expire in: 59m 59s
@@ -85,7 +83,6 @@ Outputting the following for shell evaluation:
 
 ```bash
 $ vault-aws-creds --ttl=4h prod bar
-WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
 Got credentials for account 'aws_dev/' role 'foo'
 Request ID (for troubleshooting): b02d0346-cce2-911f-d853-17cf8aa591a2
 Lease (credentials) will expire in: 3h 59m 59s
