@@ -424,7 +424,7 @@ class VaultAwsCredExporter(object):
                                     body=json.dumps({'path': path}))
             )
             logger.debug('Capabilities: %s', caps['capabilities'])
-            if 'read' in caps['capabilities']:
+            if 'read' in caps['capabilities'] or 'root' in caps['capabilities']:
                 roles.append(rname)
         logger.debug('Vault Roles for %s mountpoint: %s', mpoint, roles)
         return roles
