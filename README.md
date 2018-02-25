@@ -14,9 +14,10 @@ Python 2.7+ or Python 3. No external dependencies.
 1. Place (or symlink) ``vault-aws-creds.py`` somewhere on your system and make it executable.
 2. ``export VAULT_ADDR=<address to your Vault instance>``; it's recommended to
   put that in your ``~/.bashrc`` as well.
-3. Run ``vault-aws-creds.py --wrapper-func`` and put the output of that
-  in your ``~/.bashrc``. The wrapper function allows using this Python script to
-  set environment variables in the _existing_ shell process.
+3. Add ``eval $(vault-aws-creds.py -w)`` to your shell initialization file (i.e. ``~/.bashrc``).
+  If vault-aws-creds.py is not on your PATH, specify the absolute path to it in the
+  above snippet. This will setup a function that allows vault-aws-creds.py to export environment
+  variables back into your _existing_ shell process.
 4. *(optional)* If you wish to use the Console login URL generator, place
   (or symlink) ``aws-sts-console-url.py`` somewhere on your system and make it
   executable.
@@ -128,7 +129,7 @@ to STDOUT.
 ## Suggested Vault Policies
 
 In addition to the required policies to retrieve the credentials you need,
-listing available accounts and roles requires the following policy:
+listing available accounts and roles requires the following policy on your token:
 
 ```
 # allows user to list mounts, to find all AWS secret backends

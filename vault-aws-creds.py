@@ -40,6 +40,16 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.6 2018-02-25 Jason Antman <jason@jasonantman.com>:
+- Update README and ``bash_wrapper()`` to use eval for retrieving shell rc
+  file function, instead of hard-coding. This allows updating the wrapper
+  function automatically. Thanks to Gerard Hickey <https://github.com/hickey>
+  for this PR.
+- The ``--region`` / ``-r`` CLI argument was formerly completely ignored. Change
+  code to use that argument if present, or else ``AWS_REGION`` env var if
+  present or else ``AWS_DEFAULT_REGION`` if present. Thanks to Gerard Hickey
+  <https://github.com/hickey> for this PR.
+
 0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
 - store and retrieve TTL value per-mountpoint from config file, like role.
 
@@ -88,7 +98,7 @@ else:
     import configparser as ConfigParser
     from urllib.parse import urlparse
 
-__version__ = '0.2.4'  # increment version in other scripts in sync with this
+__version__ = '0.2.6'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
