@@ -54,6 +54,7 @@ Changelog
   'update', 'sudo', 'root']. Previously, we required "read" specifically, which
   is not valid in all cases. Thanks to Gerard Hickey
   <https://github.com/hickey> for this PR.
+- Fix #10 - Specific, clearer error message if unable to connect to Vault.
 
 0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
 - store and retrieve TTL value per-mountpoint from config file, like role.
@@ -93,6 +94,7 @@ import logging
 from textwrap import dedent
 import json
 import re
+import socket
 
 if sys.version_info[0] == 2:
     from httplib import HTTPSConnection, HTTPConnection
@@ -102,6 +104,14 @@ else:
     from http.client import HTTPSConnection, HTTPConnection
     import configparser as ConfigParser
     from urllib.parse import urlparse
+
+if (
+    sys.version_info[0] < 3 or
+    sys.version_info[0] == 3 and sys.version_info[1] < 3
+):
+    SOCKET_EXC = socket.error
+else:
+    SOCKET_EXC = ConnectionError
 
 __version__ = '0.2.6'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
@@ -347,7 +357,15 @@ class VaultAwsCredExporter(object):
         conn = kls(host, port)
         logger.debug('%s request to %s:%s - %s %s (body: %s)',
                      scheme, host, port, method, path, body)
-        conn.request(method, path, body, headers)
+        try:
+            conn.request(method, path, body, headers)
+        except SOCKET_EXC as exc:
+            sys.stderr.write(
+                'ERROR Connecting to Vault at %s://%s:%s - %s\n' % (
+                    scheme, host, port, exc
+                )
+            )
+            raise SystemExit(1)
         resp = conn.getresponse()
         logger.debug('Response: HTTP %s %s', resp.status, resp.reason)
         logger.debug('Headers: %s', resp.getheaders())
