@@ -49,6 +49,11 @@ Changelog
   code to use that argument if present, or else ``AWS_REGION`` env var if
   present or else ``AWS_DEFAULT_REGION`` if present. Thanks to Gerard Hickey
   <https://github.com/hickey> for this PR.
+- Fix #11 - When checking to see if the current token has capabilities to use
+  a given credential path, consider this true if it has any of ['read',
+  'update', 'sudo', 'root']. Previously, we required "read" specifically, which
+  is not valid in all cases. Thanks to Gerard Hickey
+  <https://github.com/hickey> for this PR.
 
 0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
 - store and retrieve TTL value per-mountpoint from config file, like role.
@@ -426,6 +431,7 @@ class VaultAwsCredExporter(object):
             )
             return []
         roles = []
+        required_caps = ['read', 'update', 'sudo', 'root']
         for rname in res['data']['keys']:
             path = '%ssts/%s' % (mpoint, rname)
             logger.debug('Checking capabilities for: %s', path)
@@ -434,7 +440,8 @@ class VaultAwsCredExporter(object):
                                     body=json.dumps({'path': path}))
             )
             logger.debug('Capabilities: %s', caps['capabilities'])
-            if 'read' in caps['capabilities'] or 'root' in caps['capabilities']:
+            if any(cap in caps['capabilities'] for cap in required_caps):
+                # if any of required_caps are in caps['capabilities'] ...
                 roles.append(rname)
         logger.debug('Vault Roles for %s mountpoint: %s', mpoint, roles)
         return roles
