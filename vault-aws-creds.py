@@ -40,6 +40,12 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.7 2018-02-25 Jason Antman <jason@jasonantman.com>:
+- Fix bug in last release, where if we couldn't connect to Vault, the bashrc
+  ``eval $(vault-aws-creds.py -w)`` would hang indefinitely. Fixed by changing
+  ``VaultAwsCredExporter.bash_wrapper`` from a property to a static method, and
+  calling it (and exiting) before class initialization.
+
 0.2.6 2018-02-25 Jason Antman <jason@jasonantman.com>:
 - Update README and ``bash_wrapper()`` to use eval for retrieving shell rc
   file function, instead of hard-coding. This allows updating the wrapper
@@ -113,7 +119,7 @@ if (
 else:
     SOCKET_EXC = ConnectionError
 
-__version__ = '0.2.6'  # increment version in other scripts in sync with this
+__version__ = '0.2.7'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
@@ -257,8 +263,8 @@ class VaultAwsCredExporter(object):
             return
         self._set_conf(section, option, 'false')
 
-    @property
-    def bash_wrapper(self):
+    @staticmethod
+    def bash_wrapper():
         """
         Return the string bash wrapper function to execute this command and
         evaluate the STDOUT.
@@ -276,7 +282,7 @@ class VaultAwsCredExporter(object):
                   "    # This executes the script with the supplied " \
                   "arguments and then\n" \
                   "    # evaluates the STDOUT. It lets us export env vars in " \
-                  "an existing session.\n"  % (p, __version__, _SRC_URL)
+                  "an existing session.\n" % (p, __version__, _SRC_URL)
         return wrapper
 
     def _set_vault_creds(self):
@@ -752,12 +758,13 @@ if __name__ == "__main__":
     elif args.verbose == 1:
         set_log_info()
 
+    if args.show_wrapper:
+        print(VaultAwsCredExporter.bash_wrapper())
+        raise SystemExit(1)
+
     try:
         exporter = VaultAwsCredExporter(args.config, args.region, args.ttl)
 
-        if args.show_wrapper:
-            print(exporter.bash_wrapper)
-            raise SystemExit(1)
         if not args.wrapper_called:
             sys.stderr.write(
                 bold('vault-aws-creds.py should be called through a bash wrapper '
