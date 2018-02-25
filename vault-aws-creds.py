@@ -424,7 +424,7 @@ class VaultAwsCredExporter(object):
                                     body=json.dumps({'path': path}))
             )
             logger.debug('Capabilities: %s', caps['capabilities'])
-            if 'read' in caps['capabilities']:
+            if 'read' in caps['capabilities'] or 'root' in caps['capabilities']:
                 roles.append(rname)
         logger.debug('Vault Roles for %s mountpoint: %s', mpoint, roles)
         return roles
@@ -511,10 +511,14 @@ class VaultAwsCredExporter(object):
             sys.stderr.write(
                 "To renew, run: vault renew %s\n" % creds['lease_id']
             )
-        region = os.environ.get(
-            'AWS_REGION',
-            os.environ.get('AWS_DEFAULT_REGION', None)
-        )
+
+        if self._cli_region:
+            region = self._cli_region
+        else:
+            region = os.environ.get(
+                'AWS_REGION',
+                os.environ.get('AWS_DEFAULT_REGION', None)
+            )
         if region is None:
             region = self._region
         exports = [
