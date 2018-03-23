@@ -497,7 +497,7 @@ class VaultAwsCredExporter(object):
         )
         if creds.get('renewable', False):
             sys.stderr.write(
-                "To renew, run: vault renew %s\n" % creds['lease_id']
+                "To renew, run: vault lease renew [-increment=<duration>] %s\n" % creds['lease_id']
             )
         region = os.environ.get(
             'AWS_REGION',
