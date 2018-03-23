@@ -30,6 +30,15 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.7 2018-02-25 Jason Antman <jason@jasonantman.com>:
+- change to vault-aws-creds.py
+
+0.2.6 2018-02-25 Jason Antman <jason@jasonantman.com>:
+- change to vault-aws-creds.py
+
+0.2.5 2018-02-20 Jason Antman <jason@jasonantman.com>:
+- change to vault-aws-creds.py
+
 0.2.4 2018-01-29 Jason Antman <jason@jasonantman.com>:
 - change to vault-aws-creds.py
 
@@ -53,7 +62,7 @@ else:
     import configparser as ConfigParser
     from urllib.parse import urlparse, quote_plus
 
-__version__ = '0.2.4'  # increment version in other scripts in sync with this
+__version__ = '0.2.7'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'aws-sts-console-url.py'

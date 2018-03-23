@@ -2,7 +2,7 @@
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-Python helper to export Vault-provided temporary AWS creds into the environment.
+Python helper to export Vault-provided temporary AWS credentials into the environment.
 Also includes a helper script to generate a Console login URL from STS temporary credentials (from Vault).
 
 ## Requirements
@@ -14,9 +14,10 @@ Python 2.7+ or Python 3. No external dependencies.
 1. Place (or symlink) ``vault-aws-creds.py`` somewhere on your system and make it executable.
 2. ``export VAULT_ADDR=<address to your Vault instance>``; it's recommended to
   put that in your ``~/.bashrc`` as well.
-3. Run ``vault-aws-creds.py --wrapper-func`` and put the output of that
-  in your ``~/.bashrc``. The wrapper function allows using this Python script to
-  set environment variables in the _existing_ shell process.
+3. Add ``eval $(vault-aws-creds.py -w)`` to your shell initialization file (i.e. ``~/.bashrc``).
+  If vault-aws-creds.py is not on your PATH, specify the absolute path to it in the
+  above snippet. This will setup a function that allows vault-aws-creds.py to export environment
+  variables back into your _existing_ shell process.
 4. *(optional)* If you wish to use the Console login URL generator, place
   (or symlink) ``aws-sts-console-url.py`` somewhere on your system and make it
   executable.
@@ -33,6 +34,8 @@ Available Accounts:
 "aws_uat" a.k.a. "uat"
 ```
 
+__Note:__ This requires that your token have "read" access to ``sys/mounts``.
+
 ### List available roles for account "dev"
 
 ```bash
@@ -45,11 +48,12 @@ developer
 readonly
 ```
 
+__Note:__ This requires that your token have "list" access to ``roles`` under the specified mountpoint (i.e. ``aws_dev/roles`` in the above example).
+
 ### Get STS credentials for the "foo" role in the "dev" account
 
 ```bash
 $ vault-aws-creds dev foo
-WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
 Got credentials for account 'aws_dev/' role 'foo'
 Request ID (for troubleshooting): c0e952d4-61ea-72e8-7b56-2df50538eacf
 Lease (credentials) will expire in: 59m 59s
@@ -67,10 +71,26 @@ the role name:
 
 ```bash
 $ vault-aws-creds dev
-WARNING: STS credentials cannot call any IAM APIs or any STS APIs other than AssumeRole or GetCallerIdentity. If you need to call IAM APIs or other STS APIs, please generate new credentials with the --iam option.
 Got credentials for account 'aws_dev/' role 'foo'
 Request ID (for troubleshooting): b02d0346-cce2-911f-d853-17cf8aa591a2
 Lease (credentials) will expire in: 59m 59s
+Outputting the following for shell evaluation:
+        export AWS_REGION='us-east-1'
+        export AWS_DEFAULT_REGION='us-east-1'
+        export AWS_ACCESS_KEY_ID='ASIAzzzzzzzzzzzzzzzz'
+        export AWS_SECRET_ACCESS_KEY='8zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzE'
+        export AWS_SESSION_TOKEN='F...F'
+```
+
+### Get 4-hour-lifetime STS credentials for the "bar" role in the "prod" account
+
+(Note: this requires that your user in Vault have "update" capabilities for the sts path. Users of older Vault installations may only have "read".)
+
+```bash
+$ vault-aws-creds --ttl=4h prod bar
+Got credentials for account 'aws_dev/' role 'foo'
+Request ID (for troubleshooting): b02d0346-cce2-911f-d853-17cf8aa591a2
+Lease (credentials) will expire in: 3h 59m 59s
 Outputting the following for shell evaluation:
         export AWS_REGION='us-east-1'
         export AWS_DEFAULT_REGION='us-east-1'
@@ -109,7 +129,7 @@ to STDOUT.
 ## Suggested Vault Policies
 
 In addition to the required policies to retrieve the credentials you need,
-listing available accounts and roles requires the following policy:
+listing available accounts and roles requires the following policy on your token:
 
 ```
 # allows user to list mounts, to find all AWS secret backends
