@@ -81,8 +81,11 @@ logger = logging.getLogger()
 
 class StsUrlGenerator(object):
 
-    def __init__(self):
-        self.creds = self._get_creds_from_env()
+    def __init__(self, use_profiles=False):
+        if use_profiles:
+            self.creds = self._get_creds_from_profile()
+        else:
+            self.creds = self._get_creds_from_env()
 
     def _get_creds_from_env(self):
         """
@@ -106,6 +109,43 @@ class StsUrlGenerator(object):
                 )
             res[key] = os.environ[varname]
         logger.info('Got AWS credentials from environment variables')
+        return res
+
+    def _get_creds_from_profile(self):
+        """
+        Get AWS credentials from [default] profile.
+
+        :return: dict of AWS credentials, suitable for passing to the
+        https://signin.aws.amazon.com/federation API.
+        :rtype: dict
+        """
+        res = {}
+        logger.debug('Getting AWS credentials from [default] profile')
+
+        ConfigParser.DEFAULTSECT = 'default'
+        aws_config_dir = os.path.expanduser('~/.aws')
+        if not os.path.exists(aws_config_dir):
+            raise RuntimeError(
+                'ERROR: [default] AWS profile not set in %s/credentials' % aws_config_dir
+            )
+        credentialConfig = ConfigParser.RawConfigParser()
+        credentialConfig.read(aws_config_dir + '/credentials')
+        if not credentialConfig.defaults():
+            raise RuntimeError(
+                'ERROR: [default] AWS profile not set in %s/credentials' % aws_config_dir
+            )
+        for varname, key in {
+            'aws_access_key_id': 'sessionId',
+            'aws_secret_access_key': 'sessionKey',
+            'aws_session_token': 'sessionToken'
+        }.items():
+            if not credentialConfig.has_option('default', varname):
+                raise RuntimeError(
+                    'ERROR: %s option not set in default profile' % varname
+                )
+            res[key] = credentialConfig.get('default', varname)
+
+        logger.info('Got AWS credentials from [default] profile')
         return res
 
     def generate(self, browser=False):
@@ -210,8 +250,11 @@ def parse_args(argv):
                     'based on STS temporary credentials in environment '
                     'variables.'
     )
+
     p.add_argument('-b', '--browser', dest='browser', action='store_true', default=False,
                    help='open console URL in new tab in default browser')
+    p.add_argument('-p', '--use-profiles', dest='use_profiles', action='store_true', default=False,
+                   help='If specified, uses default profile for credentials')
     p.add_argument('-v', '--verbose', dest='verbose', action='count', default=0,
                    help='verbose output. specify twice for debug-level output.')
     p.add_argument('-V', '--version', action='store_true', default=False,
@@ -235,4 +278,4 @@ if __name__ == "__main__":
     elif args.verbose == 1:
         set_log_info()
 
-    StsUrlGenerator().generate(browser=args.browser)
+    StsUrlGenerator(use_profiles=args.use_profiles).generate(browser=args.browser)

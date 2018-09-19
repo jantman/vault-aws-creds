@@ -475,7 +475,7 @@ class VaultAwsCredExporter(object):
         return roles
 
     def get_creds(self, mountpoint, role_name, iam=False, store_role=True,
-                  store_ttl=True):
+                  store_ttl=True, use_profiles=False):
         """
         Given an AWS secret backend mountpoint and a role name, return export
         statements to set credentials for that role.
@@ -566,17 +566,63 @@ class VaultAwsCredExporter(object):
             )
         if region is None:
             region = self._region
-        exports = [
-            "export AWS_REGION='%s'" % region,
-            "export AWS_DEFAULT_REGION='%s'" % region,
-            "export AWS_ACCESS_KEY_ID='%s'" % data['access_key'],
-            "export AWS_SECRET_ACCESS_KEY='%s'" % data['secret_key']
-        ]
-        sess = data.get('security_token', None)
-        if sess is not None:
-            exports.append("export AWS_SESSION_TOKEN='%s'" % sess)
+
+        if use_profiles:
+            ConfigParser.DEFAULTSECT = 'default'
+            aws_config_dir = os.path.expanduser('~/.aws')
+            if not os.path.exists(aws_config_dir):
+                os.makedirs(aws_config_dir)
+
+            config = ConfigParser.SafeConfigParser({'region': region})
+            profile_name = mountpoint + role_name
+            config.read(aws_config_dir + '/config')
+            if not config.has_section('profile ' + profile_name):
+                config.add_section('profile ' + profile_name)
+            config.set('profile ' + profile_name, 'region', region)
+            with open(aws_config_dir + '/config', 'wb') as configfile:
+                config.write(configfile)
+
+            credentialConfig = ConfigParser.RawConfigParser()
+            credentialConfig.read(aws_config_dir + '/credentials')
+            if not credentialConfig.has_section(profile_name):
+                credentialConfig.add_section(profile_name)
+            credentialConfig.set(profile_name, 'aws_access_key_id', data['access_key'])
+            credentialConfig.set(profile_name, 'aws_secret_access_key', data['secret_key'])
+            if iam:
+                credentialConfig.remove_option(profile_name, 'aws_session_token')
+            else:
+                credentialConfig.set(profile_name, 'aws_session_token', data.get('security_token', None))
+            credentialConfig.set('default', 'aws_access_key_id', data['access_key'])
+            credentialConfig.set('default', 'aws_secret_access_key', data['secret_key'])
+            if iam:
+                credentialConfig.remove_option('default', 'aws_session_token')
+            else:
+                credentialConfig.set('default', 'aws_session_token', data.get('security_token', None))
+            with open(aws_config_dir + '/credentials', 'wb') as configfile:
+                credentialConfig.write(configfile)
+            exports = [
+                "unset AWS_REGION",
+                "unset AWS_DEFAULT_REGION",
+                "unset AWS_ACCESS_KEY_ID",
+                "unset AWS_SECRET_ACCESS_KEY",
+                "unset AWS_SESSION_TOKEN"
+            ]
+            sys.stderr.write(
+                "Exported credentials to default profile\n"
+            )
         else:
-            exports.append("unset AWS_SESSION_TOKEN")
+            exports = [
+                "export AWS_REGION='%s'" % region,
+                "export AWS_DEFAULT_REGION='%s'" % region,
+                "export AWS_ACCESS_KEY_ID='%s'" % data['access_key'],
+                "export AWS_SECRET_ACCESS_KEY='%s'" % data['secret_key']
+            ]
+            sess = data.get('security_token', None)
+            if sess is not None:
+                exports.append("export AWS_SESSION_TOKEN='%s'" % sess)
+            else:
+                exports.append("unset AWS_SESSION_TOKEN")
+
         sys.stderr.write(
             "Outputting the following for shell evaluation:"
             "\n%s\n" % "\n".join(["\t%s" % x for x in exports])
@@ -725,6 +771,9 @@ def parse_args(argv):
     p.add_argument('--iam', dest='iam', action='store_true', default=False,
                    help='If specified, get IAM User credentials. Otherwise, get'
                         ' STS credentials.')
+    p.add_argument('-p', '--use-profiles', dest='use_profiles', action='store_true', default=False,
+                   help='If specified, adds default named profile to ~/.aws '
+                        'instead of adding environment variables')
     p.add_argument('-R', '--no-stored-role', dest='store_role',
                    action='store_false', default=True,
                    help='Do not store role selection in, or use previous role '
@@ -808,7 +857,8 @@ if __name__ == "__main__":
             raise SystemExit(1)
         print(exporter.get_creds(acct, args.ROLE, iam=args.iam,
                                  store_role=args.store_role,
-                                 store_ttl=args.store_ttl))
+                                 store_ttl=args.store_ttl,
+                                 use_profiles=args.use_profiles))
     except VaultException as ex:
         sys.stderr.write("ERROR: %s\n" % ex)
         raise SystemExit(1)
