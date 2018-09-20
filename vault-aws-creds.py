@@ -40,6 +40,10 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.8 2018-09-20 Chris Bartlett <bartlettc@gmail.com>:
+- Add ``-b`` / ``--browser`` option to aws-sts-console-url.py to automatically
+  open the console URL in your default browser.
+
 0.2.7 2018-02-25 Jason Antman <jason@jasonantman.com>:
 - Fix bug in last release, where if we couldn't connect to Vault, the bashrc
   ``eval $(vault-aws-creds.py -w)`` would hang indefinitely. Fixed by changing
@@ -119,7 +123,7 @@ if (
 else:
     SOCKET_EXC = ConnectionError
 
-__version__ = '0.2.7'  # increment version in other scripts in sync with this
+__version__ = '0.2.8'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
