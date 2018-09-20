@@ -51,6 +51,7 @@ import os
 import argparse
 import logging
 import json
+import webbrowser
 
 if sys.version_info[0] == 2:
     from httplib import HTTPSConnection, HTTPConnection
@@ -103,7 +104,7 @@ class StsUrlGenerator(object):
         logger.info('Got AWS credentials from environment variables')
         return res
 
-    def generate(self):
+    def generate(self, browser=False):
         """
         Generate an STS login URL, and print it to STDOUT.
         """
@@ -122,6 +123,8 @@ class StsUrlGenerator(object):
             'The following sign-in URL must be used within 15 minutes:\n'
         )
         print(url)
+        if browser:
+            webbrowser.open_new_tab(url)
 
 
     def _get_signin_token(self, creds):
@@ -203,6 +206,8 @@ def parse_args(argv):
                     'based on STS temporary credentials in environment '
                     'variables.'
     )
+    p.add_argument('-b', '--browser', dest='browser', action='store_true', default=False,
+                   help='open console URL in new tab in default browser')
     p.add_argument('-v', '--verbose', dest='verbose', action='count', default=0,
                    help='verbose output. specify twice for debug-level output.')
     p.add_argument('-V', '--version', action='store_true', default=False,
@@ -226,4 +231,4 @@ if __name__ == "__main__":
     elif args.verbose == 1:
         set_log_info()
 
-    StsUrlGenerator().generate()
+    StsUrlGenerator().generate(browser=args.browser)

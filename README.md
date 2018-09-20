@@ -124,7 +124,9 @@ temporary credentials, i.e. not ``--iam`` credentials from ``vault-aws-creds``.*
 
 To use, first obtain STS temporary credentials with ``vault-aws-creds`` as shown
 above. Then, run ``aws-sts-console-url.py``; a Console login URL will be displayed
-to STDOUT.
+to STDOUT.  Alternatively, you can pass in the `-b` or `--browser` flag which
+will open the console automatically in your default browser
+`aws-sts-console-url.py --browser`.
 
 ## Suggested Vault Policies
 
