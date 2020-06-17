@@ -40,6 +40,10 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.9 2020-06-17 Jason Antman <jason@jasonantman.com>:
+- Fix bug where the ``-t`` / ``--ttl`` CLI option was ignored, instead using the
+  saved value from ``~/.vault-aws-creds.conf``
+
 0.2.8 2018-09-20 Chris Bartlett <bartlettc@gmail.com>:
 - Add ``-b`` / ``--browser`` option to aws-sts-console-url.py to automatically
   open the console URL in your default browser.
@@ -123,7 +127,7 @@ if (
 else:
     SOCKET_EXC = ConnectionError
 
-__version__ = '0.2.8'  # increment version in other scripts in sync with this
+__version__ = '0.2.9'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'
@@ -512,10 +516,11 @@ class VaultAwsCredExporter(object):
                 "as the default for future invocations." % mountpoint
             )
         default_ttl = self._get_conf('ttl', mountpoint)
-        if store_ttl and default_ttl is not None and self._ttl is not None:
-            ttl = default_ttl
-        else:
+        ttl = None
+        if self._ttl is not None:
             ttl = self._ttl
+        elif default_ttl is not None:
+            ttl = default_ttl
         body = None
         if iam:
             path = "/v1/%screds/%s" % (mountpoint, role_name)
@@ -527,11 +532,11 @@ class VaultAwsCredExporter(object):
             creds = json.loads(self._vault_request('GET', path, body=body))
         else:
             path = "/v1/%ssts/%s" % (mountpoint, role_name)
-            if self._ttl:
+            if ttl:
                 body = json.dumps({'ttl': ttl})
             logger.info(
                 'Getting AWS credentials via path: {0} body: {1}'.format(
-                    path,body
+                    path, body
                 )
             )
             creds = json.loads(self._vault_request('POST', path, body=body))
