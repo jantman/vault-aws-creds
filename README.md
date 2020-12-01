@@ -128,6 +128,10 @@ to STDOUT.  Alternatively, you can pass in the `-b` or `--browser` flag which
 will open the console automatically in your default browser
 `aws-sts-console-url.py --browser`.
 
+### GovCloud and Other Partitions
+
+By default, ``aws-sts-console-url.py`` uses the signin.aws.amazon.com endpoint for Console access and federation tokens. This can be overridden by setting the ``AWS_SIGNIN_HOST`` environment varibale, i.e. to something like ``signin.amazonaws-us-gov.com`` or ``us-gov-east-1.signin.amazonaws-us-gov.com`` for GovCloud or ``signin.amazonaws.cn`` for the China partition.
+
 ## Suggested Vault Policies
 
 In addition to the required policies to retrieve the credentials you need,
@@ -145,3 +149,9 @@ path "aws_*/roles" {
     capabilities = ["list"]
 }
 ```
+
+## Similar Projects
+
+I have nothing to do with the following projects, and haven't used them, but are listing them here for anyone who may be interested:
+
+* https://github.com/FairwindsOps/vaultutil - A similar utility written in Go.
