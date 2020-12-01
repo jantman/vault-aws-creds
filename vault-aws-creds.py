@@ -40,6 +40,11 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.10 2020-12-01 Jason Antman <jason@jasonantman.com>:
+- Add link to https://github.com/FairwindsOps/vaultutil in README
+- Update aws-sts-console-url.py to allow alternate signin endpoints via the
+  ``AWS_SIGNIN_HOST`` environment variable.
+
 0.2.9 2020-06-17 Jason Antman <jason@jasonantman.com>:
 - Fix bug where the ``-t`` / ``--ttl`` CLI option was ignored, instead using the
   saved value from ``~/.vault-aws-creds.conf``
@@ -127,7 +132,7 @@ if (
 else:
     SOCKET_EXC = ConnectionError
 
-__version__ = '0.2.9'  # increment version in other scripts in sync with this
+__version__ = '0.2.10'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'vault-aws-creds.py'

@@ -30,6 +30,11 @@ Changelog
 
 (be sure to increment __version__ with Changelog additions!!)
 
+0.2.10 2020-12-01 Jason Antman <jason@jasonantman.com>:
+- Add link to https://github.com/FairwindsOps/vaultutil in README
+- Update aws-sts-console-url.py to allow alternate signin endpoints via the
+  ``AWS_SIGNIN_HOST`` environment variable.
+
 0.2.8 2018-09-20 Chris Bartlett <bartlettc@gmail.com>:
 - Add ``-b`` / ``--browser`` option to aws-sts-console-url.py to automatically
   open the console URL in your default browser.
@@ -67,7 +72,7 @@ else:
     import configparser as ConfigParser
     from urllib.parse import urlparse, quote_plus
 
-__version__ = '0.2.8'  # increment version in other scripts in sync with this
+__version__ = '0.2.10'  # increment version in other scripts in sync with this
 __author__ = 'jason@jasonantman.com'
 _SRC_URL = 'https://github.com/jantman/vault-aws-creds/blob/master/' \
            'aws-sts-console-url.py'
@@ -114,11 +119,13 @@ class StsUrlGenerator(object):
         """
         signin_token = self._get_signin_token(self.creds)
         logger.debug('Ok, got valid signin token.')
-        url = 'https://signin.aws.amazon.com/federation' \
+        host = os.environ.get('AWS_SIGNIN_HOST', 'signin.aws.amazon.com')
+        url = 'https://%s/federation' \
               '?Action=login' \
               '&Issuer=%s' \
               '&Destination=%s' \
               '&SigninToken=%s' % (
+            host,
             quote_plus(_SRC_URL),
             quote_plus('https://console.aws.amazon.com/'),
             signin_token
@@ -140,10 +147,10 @@ class StsUrlGenerator(object):
         :return: signin token returned by the federation endpoint
         :rtype: str
         """
-        host = 'signin.aws.amazon.com'
-        req_path = 'https://signin.aws.amazon.com/federation' \
+        host = os.environ.get('AWS_SIGNIN_HOST', 'signin.aws.amazon.com')
+        req_path = 'https://%s/federation' \
                    '?Action=getSigninToken' \
-                   '&Session=%s' % quote_plus(json.dumps(creds))
+                   '&Session=%s' % (host, quote_plus(json.dumps(creds)))
         logger.debug('HTTPS GET request to %s: %s', host, req_path)
         conn = HTTPSConnection(host, 443)
         conn.request('GET', req_path)
