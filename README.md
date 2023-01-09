@@ -1,6 +1,6 @@
 # vault-aws-creds
 
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.](https://www.repostatus.org/badges/2.1.0/unsupported.svg)](https://www.repostatus.org/#unsupported)
 
 Python helper to export Vault-provided temporary AWS credentials into the environment.
 Also includes a helper script to generate a Console login URL from STS temporary credentials (from Vault).
